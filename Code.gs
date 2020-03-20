@@ -4,15 +4,14 @@ A program to scrape data form the san diego site for reporting COVID-19 cases.
 
 https://www.sandiegocounty.gov/content/sdc/hhsa/programs/phs/community_epidemiology/dc/2019-nCoV/status.html
 
-Ideally, I will:
 
-- scrape the table
-- create an empty array
-- generate a array for each row
-- send the array of arrays into google sheets and log the data
+*/
 
-probably need date in [date, age bracket, SD resident, Federal, non-SD resident]
 
+
+/*
+
+Gets data form the San Diego government site. Scrape the data with numerical values.
 
 */
 
@@ -54,49 +53,52 @@ function getData() {
     // Grab the data from each column in each row
     for (k= 0; k < tds.length; k++) {
       
-      
       // TODO: maybe figure out a way to only get the age range values?
       if (tds[k].getChildren().length == 1) {
+        
         // Handles all <td> tags with a child <b> tag
         var col = tds[k].getChildren()[0].getText();
         
-      } else {
+      } 
+      else {
         // Handles all <td> tags without a child <b> tag
         var col = tds[k].getText();
-        
       }
       row.push(col);
     }
+    
+    // Only add the row to rows if there are numerical values in the row. No headers.
     if (row[2] + row[3] + row[4] + row[5] > 0) {
       rows.push(row);
     }
   }
   
   // Log each row of data
-  rows.forEach(function(row) {
-    
-    Logger.log(row);
-    
-  });
+  // rows.forEach(function(row) {
+  //    
+  //   Logger.log(row);
+  //    
+  //  });
   addToSpreadsheet(rows);
 }
 
+
+/*
+
+Sends the scraped row data into Google Sheets
+
+@param {array} rows - an array of row data that was scraped from the San Diego site.
+
+*/
+
 function addToSpreadsheet(rows) {
-//  var rows = [
-//    [1,2,3,4,5,6],
-//    [4,5,6,7,8,9]
-//    ];
+
   var sheet = SpreadsheetApp.openById("1YoJrGvn80VYjKY0--pxEr9gZPqacRm0Hdf79am1ASj0");
   var ss = sheet.getSheetByName("data");
-  var startingRow = sheet.getLastRow();
+  var startingRow = sheet.getLastRow() + 1;
   var startingColumn = 1;
   var numRows = rows.length;
   var numColumns = 6;
   
-  ss.getRange(startingRow + 1, startingColumn, numRows, numColumns).setValues(rows);
-  
-  // get a range that is starts on the last row of sheets data, and has the dimesions of the scraped data
-  // once i get the range, then set the range with the rows values that were passed through
-  // reference: https://script.google.com/a/bimschleger.com/d/1qLMbfwju23rISzJkDW4o2lcJPsKhnRVv1cQD8BBorNTGudzjizJ5bdOU/edit
-  
+  ss.getRange(startingRow, startingColumn, numRows, numColumns).setValues(rows);  
 }
