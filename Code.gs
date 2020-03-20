@@ -30,7 +30,7 @@ function getData() {
   var document = XmlService.parse(tableText[0]);
   var root = document.getRootElement();
   
-  Logger.log("Root: " + root);
+  //Logger.log("Root: " + root);
   
   // Get the tbody tag from the HTML/XML
   var tbody = root.getChildren();
@@ -67,23 +67,33 @@ function getData() {
       }
       row.push(col);
     }
-    
-    rows.push(row);
+    if (row[2] + row[3] + row[4] + row[5] > 0) {
+      rows.push(row);
+    }
   }
   
   // Log each row of data
   rows.forEach(function(row) {
     
     Logger.log(row);
+    
   });
+  addToSpreadsheet(rows);
 }
 
 function addToSpreadsheet(rows) {
-  
+//  var rows = [
+//    [1,2,3,4,5,6],
+//    [4,5,6,7,8,9]
+//    ];
   var sheet = SpreadsheetApp.openById("1YoJrGvn80VYjKY0--pxEr9gZPqacRm0Hdf79am1ASj0");
   var ss = sheet.getSheetByName("data");
-  var lastRow = sheet.getLastRow();
-  var lastColumn = sheet.getLastColumn();
+  var startingRow = sheet.getLastRow();
+  var startingColumn = 1;
+  var numRows = rows.length;
+  var numColumns = 6;
+  
+  ss.getRange(startingRow + 1, startingColumn, numRows, numColumns).setValues(rows);
   
   // get a range that is starts on the last row of sheets data, and has the dimesions of the scraped data
   // once i get the range, then set the range with the rows values that were passed through
