@@ -80,6 +80,7 @@ function getData() {
   //    
   //  });
   addToSpreadsheet(rows);
+  getChartAsPng();
 }
 
 
@@ -103,6 +104,13 @@ function addToSpreadsheet(rows) {
   ss.getRange(startingRow, startingColumn, numRows, numColumns).setValues(rows);  
 }
 
+
+/*
+
+add some details here
+
+*/
+
 function getChartAsPng() { // TODO: add 'sheet' and 'date' as input parameters
   
   var date = new Date(); // TODO: remove once I pass through the date from getData
@@ -110,6 +118,15 @@ function getChartAsPng() { // TODO: add 'sheet' and 'date' as input parameters
   var ss = sheet.getSheetByName("pivot");
   
   var chart = ss.getCharts()[0];
+  
+  chart = chart.modify()
+    .setOption('width', 800)
+    .setOption('height', 480)
+    .build();
+  
+    // TODO update chart to remove gridlines, or at least fix the weird intervals when there are only two dates
+  ss.updateChart(chart);
+  
   var chart_blob = chart.getBlob();
   
   var driveFolder = DriveApp.getFolderById("1tqad55K2orLHCCFjNYqieE2uujAfEU-S");
