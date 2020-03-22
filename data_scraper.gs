@@ -11,7 +11,9 @@ https://www.sandiegocounty.gov/content/sdc/hhsa/programs/phs/community_epidemiol
 
 /*
 
-Gets data form the San Diego government site. Scrape the data with numerical values.
+Gets data form the San Diego government site. 
+Scrape the data with numerical values.
+Prepare a 2D array to pass to Spreadsheets as tabular data.
 
 */
 
@@ -73,13 +75,10 @@ function getData() {
     }
   }
   
-  // Log each row of data
-  // rows.forEach(function(row) {
-  //    
-  //   Logger.log(row);
-  //    
-  //  });
+  // Send the scraped data into Google Sheets
   addToSpreadsheet(rows);
+  
+  // Update the age range chart and save it to Google Drive
   getChartAsPng();
 }
 
@@ -107,7 +106,7 @@ function addToSpreadsheet(rows) {
 
 /*
 
-add some details here
+Opens the Pivot table chat from Spreadsheet, saves is as a PNG in Google Drive
 
 */
 
@@ -145,7 +144,9 @@ function getChartAsPng() { // TODO: add 'sheet' and 'date' as input parameters
 
 /*
 
-add some details here
+Formats the date of a chart into a YYYY-MM-DD format for use in a file name.
+
+@return {string} dateString - YYYY-MM-DD formatted text for use in the filename of the chart PNG
 
 */
 
@@ -165,7 +166,10 @@ function formatDate() { // TODO: add 'date' as an input parameter
 
 /*
 
-add some details here
+Enforces a leading 0 for a date value, like month or day.
+
+@param {int} time - Value for a month or day that might not have a leading zero
+@return {string} time - Value for a month or day that has a leading zero
 
 */
 
