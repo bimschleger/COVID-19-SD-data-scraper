@@ -58,6 +58,7 @@ function getData() {
       // TODO: maybe figure out a way to only get the age range values?
       // TODO: Figure out a way to check if the Updated date on the website is greater than the max date value in sheets.
         // Maybe regex the first row in the table, search for "march 20, 2020", convert it to date, compare against max value?
+        // Maybe even run the script like every 4 hours, always checking to see if the updated date is new?
       
       if (tds[k].getChildren().length == 1) {
         
