@@ -98,7 +98,7 @@ function addToSpreadsheet(rows) {
 
   var sheet = SpreadsheetApp.openById("1YoJrGvn80VYjKY0--pxEr9gZPqacRm0Hdf79am1ASj0");
   var ss = sheet.getSheetByName("data");
-  var startingRow = sheet.ss() + 1;
+  var startingRow = ss.getLastRow() + 1;
   var startingColumn = 1;
   var numRows = rows.length;
   var numColumns = 6;
