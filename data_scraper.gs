@@ -8,12 +8,79 @@ https://www.sandiegocounty.gov/content/sdc/hhsa/programs/phs/community_epidemiol
 */
 
 
+/*
+
+Gets the 'Upated MM DD< YYYY" form the san diego website.
+
+@param {string} urlText - All HTML text from the San Diego coronavirus website.
+@return {object} dateSiteUpdated - datetime object for the last time the San Diego website was updated.
+
+*/
+
+function getDateSiteUpdated(urlText) {
+  
+  var regexDateUpdated = /Updated[\s\S]*?2020/g;
+  
+  var dateSiteUpdatedArray = urlText.match(regexDateUpdated); // returns array of matches
+  
+  var dateSiteUpdatedText = dateSiteUpdatedArray[0].split("Updated ");
+  var dateSiteUpdated = new Date(dateSiteUpdatedText);
+  
+  return dateSiteUpdated;
+}
 
 /*
 
-Gets data form the San Diego government site. 
-Scrape the data with numerical values.
-Prepare a 2D array to pass to Spreadsheets as tabular data.
+Gets and returns the most recent date that was submitted to the spreadsheet.
+
+@return {object} date - Datetime object of the most recent date that was added to the spreadsheet
+
+*/
+
+function getDateSheetUpdated() {
+  
+  var sheetId = "1YoJrGvn80VYjKY0--pxEr9gZPqacRm0Hdf79am1ASj0";
+  var sheetName = "data";
+  
+  var sheet = SpreadsheetApp.openById(sheetId);
+  var ss = sheet.getSheetByName(sheetName);
+  
+  var numRows = ss.getLastRow() - 1; // To tell the range to collec tuntil the last row, but starting from row 2
+  var data = ss.getRange(2, 1, numRows).getValues(); // Gets dates from all the data in the sheet
+  var recentDate = data[data.length -1];
+  
+  var date = new Date(recentDate);
+  
+  return date;
+  
+}
+
+
+/*
+
+Determines if the date updated on the website is newer than the most recent date added into the spreadsheet
+
+@param {object} siteDate - The date on which the San Diego site was most recently updated.
+@param {object} recentSheetDate - The most recent date from the Google Spreadsheet
+@return {boolean} - Boolean is the site date is newer than th emost recent Sheet date.
+
+*/
+
+function isSiteNewerThanRecentDate(siteDate, recentSheetDate) {
+
+  if (siteDate > recentSheetDate) {
+    return true;
+  }
+  else {
+    return false;
+  };
+}
+
+
+/*
+
+Gets data form the San Diego government site.
+If the site updated date is greater than the most recent date in the spreadsheet, parse the table.
 
 */
 
@@ -21,12 +88,31 @@ function getData() {
   
   var url = 'https://www.sandiegocounty.gov/content/sdc/hhsa/programs/phs/community_epidemiology/dc/2019-nCoV/status.html';
   var urlText = UrlFetchApp.fetch(url).getContentText();
-  var today = new Date();
   
+  var dateSiteUpdated = getDateSiteUpdated(urlText);
+  var recentSheetDate = getDateSheetUpdated();
+  var dateSiteUpdatedIsNew = isSiteNewerThanRecentDate(dateSiteUpdated, recentSheetDate);
   
-  // TODO: check to see if todays date is greater that the mnost recent date in the spreadsheet
-  // if yes, continue.
-    // maybe a new function to parse the data?
+  if (dateSiteUpdatedIsNew) {
+    parseTable(dateSiteUpdated, urlText);
+  } 
+  else {
+    Logger.log("Not a new date");
+  } 
+}
+
+
+/*
+
+Parses the HTML table for row values, and sends the values into Sheets.
+
+@param {object} dateSiteUpdated - datetime object for the last time the San Diego site was updated
+@param {object} urlText - all of the HTML text from the San Diego government website
+
+*/
+
+
+function parseTable(dateSiteUpdated, urlText) {
   
   var regexTable = /<table[\s\S]*?\/table>/;
   var tableText = urlText.match(regexTable);
@@ -51,8 +137,8 @@ function getData() {
   for (i = 0; i < trs.length; i++) {
     
     // We place all of the column data in this row
-    // Add in today's date, since we'll use this as a record in sheets
-    var row = [today];
+    // Add in dateSiteUpdated, since we'll use this as a record in sheets
+    var row = [dateSiteUpdated];
     
     // Gets an array of all the columns for the row
     var tds = trs[i].getChildren();
@@ -61,8 +147,6 @@ function getData() {
     for (k= 0; k < tds.length; k++) {
       
       // TODO: maybe figure out a way to only get the age range values?
-      // TODO: Figure out a way to check if the Updated date on the website is greater than the max date value in sheets.
-        // Maybe regex the first row in the table, search for "march 20, 2020", convert it to date, compare against max
       
       if (tds[k].getChildren().length == 1) {
         
@@ -116,17 +200,19 @@ function addToSpreadsheet(rows) {
 
 /*
 
-Opens the Pivot table chat from Spreadsheet, saves is as a PNG in Google Drive
+Opens the Pivot table chat from Spreadsheet, saves is as a PNG in Google Drive.
 
 */
 
-function getChartAsPng() { // TODO: add 'sheet' and 'date' as input parameters
+function getChartAsPng(dateSiteUpdated) { // TODO: add 'sheetId' as input parameter
   
-  var date = new Date(); // TODO: remove once I pass through the date from getData
-  var sheet = SpreadsheetApp.openById("1YoJrGvn80VYjKY0--pxEr9gZPqacRm0Hdf79am1ASj0") // remove once i pass through the sheet from getData
-  var ss = sheet.getSheetByName("pivot");
+  var sheetId = "1YoJrGvn80VYjKY0--pxEr9gZPqacRm0Hdf79am1ASj0";
+  var sheetName = "pivot";
   
-  var chart = ss.getCharts()[0];
+  var sheet = SpreadsheetApp.openById(sheetId)
+  var ss = sheet.getSheetByName(sheetName);
+  
+  var chart = ss.getCharts()[0]; // Gets the first chart on the pivot sheet
   
   chart = chart.modify()
     .setOption('width', 800)
@@ -141,13 +227,9 @@ function getChartAsPng() { // TODO: add 'sheet' and 'date' as input parameters
   var driveFolder = DriveApp.getFolderById("1tqad55K2orLHCCFjNYqieE2uujAfEU-S");
   var file = driveFolder.createFile(chart_blob);
   
-  var dateString = formatDate(date);
+  var dateString = formatDate(dateSiteUpdated);
   
   file.setName("Coronavirus-SanDiego-" + dateString);
-  
-
-  // get the url of the png in drive
-  // include the url of the png in an email
   
 }
 
@@ -160,9 +242,8 @@ Formats the date of a chart into a YYYY-MM-DD format for use in a file name.
 
 */
 
-function formatDate() { // TODO: add 'date' as an input parameter
+function formatDate(date) {
   
-  var date = new Date(); // TODO:  remove this and accept 'date' as in input parameter
   var year = cleanSingleDigitTime(date.getFullYear());
   var month = cleanSingleDigitTime(date.getMonth() + 1);
   var day = cleanSingleDigitTime(date.getDate());
@@ -188,30 +269,4 @@ function cleanSingleDigitTime(time) {
       time = "0" + time;
     };
   return time; 
-}
-
-
-/*
-
-Gets and returns the most recent date that was submitted to the spreadsheet.
-
-@return {object} date - Datetime object of the most recent date that was added to the spreadsheet
-
-*/
-
-function getMostRecentDate() {
-  
-  var sheetId = "1YoJrGvn80VYjKY0--pxEr9gZPqacRm0Hdf79am1ASj0";
-  var sheetName = "data";
-  var sheet = SpreadsheetApp.openById(sheetId);
-  var ss = sheet.getSheetByName(sheetName);
-  
-  var numRows = ss.getLastRow() - 1; // To tell the range to collec tuntil the last row, but starting from row 2
-  var data = ss.getRange(2, 1, numRows).getValues(); // Gets dates from all the data in the sheet
-  var recentDate = data[data.length -1];
-  
-  var date = new Date(recentDate);
-  
-  Logger.log(date);
-  
 }
