@@ -23,6 +23,11 @@ function getData() {
   var urlText = UrlFetchApp.fetch(url).getContentText();
   var today = new Date();
   
+  
+  // TODO: check to see if todays date is greater that the mnost recent date in the spreadsheet
+  // if yes, continue.
+    // maybe a new function to parse the data?
+  
   var regexTable = /<table[\s\S]*?\/table>/;
   var tableText = urlText.match(regexTable);
   
@@ -57,8 +62,7 @@ function getData() {
       
       // TODO: maybe figure out a way to only get the age range values?
       // TODO: Figure out a way to check if the Updated date on the website is greater than the max date value in sheets.
-        // Maybe regex the first row in the table, search for "march 20, 2020", convert it to date, compare against max value?
-        // Maybe even run the script like every 4 hours, always checking to see if the updated date is new?
+        // Maybe regex the first row in the table, search for "march 20, 2020", convert it to date, compare against max
       
       if (tds[k].getChildren().length == 1) {
         
@@ -73,7 +77,9 @@ function getData() {
       row.push(col);
     }
     
-    // Only add the row to rows if there are numerical values in the row. No headers.
+    // Only add the row to rows if there are numerical values in the row. No headers. 
+    // TODO  figur eout a way to get the zeroes in there
+      // check for numm values instead of blanks.
     if (row[2] + row[3] + row[4] + row[5] > 0) {
       rows.push(row);
     }
@@ -182,4 +188,30 @@ function cleanSingleDigitTime(time) {
       time = "0" + time;
     };
   return time; 
+}
+
+
+/*
+
+Gets and returns the most recent date that was submitted to the spreadsheet.
+
+@return {object} date - Datetime object of the most recent date that was added to the spreadsheet
+
+*/
+
+function getMostRecentDate() {
+  
+  var sheetId = "1YoJrGvn80VYjKY0--pxEr9gZPqacRm0Hdf79am1ASj0";
+  var sheetName = "data";
+  var sheet = SpreadsheetApp.openById(sheetId);
+  var ss = sheet.getSheetByName(sheetName);
+  
+  var numRows = ss.getLastRow() - 1; // To tell the range to collec tuntil the last row, but starting from row 2
+  var data = ss.getRange(2, 1, numRows).getValues(); // Gets dates from all the data in the sheet
+  var recentDate = data[data.length -1];
+  
+  var date = new Date(recentDate);
+  
+  Logger.log(date);
+  
 }
