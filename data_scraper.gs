@@ -10,7 +10,32 @@ https://www.sandiegocounty.gov/content/sdc/hhsa/programs/phs/community_epidemiol
 
 /*
 
-Gets the 'Upated MM DD< YYYY" form the san diego website.
+Gets data form the San Diego government site.
+If the site updated date is greater than the most recent date in the spreadsheet, parse the table.
+
+*/
+
+function getData() {
+  
+  var url = 'https://www.sandiegocounty.gov/content/sdc/hhsa/programs/phs/community_epidemiology/dc/2019-nCoV/status.html';
+  var urlText = UrlFetchApp.fetch(url).getContentText();
+  
+  var dateSiteUpdated = getDateSiteUpdated(urlText);
+  var recentSheetDate = getDateSheetUpdated();
+  var dateSiteUpdatedIsNew = isSiteNewerThanRecentDate(dateSiteUpdated, recentSheetDate);
+  
+  if (dateSiteUpdatedIsNew) {
+    parseTable(dateSiteUpdated, urlText);
+  } 
+  else {
+    Logger.log("Not a new date");
+  } 
+}
+
+
+/*
+
+Gets the 'Updated [Month] DD, YYYY" form the San Diego website.
 
 @param {string} urlText - All HTML text from the San Diego coronavirus website.
 @return {object} dateSiteUpdated - datetime object for the last time the San Diego website was updated.
@@ -28,6 +53,7 @@ function getDateSiteUpdated(urlText) {
   
   return dateSiteUpdated;
 }
+
 
 /*
 
@@ -74,31 +100,6 @@ function isSiteNewerThanRecentDate(siteDate, recentSheetDate) {
   else {
     return false;
   };
-}
-
-
-/*
-
-Gets data form the San Diego government site.
-If the site updated date is greater than the most recent date in the spreadsheet, parse the table.
-
-*/
-
-function getData() {
-  
-  var url = 'https://www.sandiegocounty.gov/content/sdc/hhsa/programs/phs/community_epidemiology/dc/2019-nCoV/status.html';
-  var urlText = UrlFetchApp.fetch(url).getContentText();
-  
-  var dateSiteUpdated = getDateSiteUpdated(urlText);
-  var recentSheetDate = getDateSheetUpdated();
-  var dateSiteUpdatedIsNew = isSiteNewerThanRecentDate(dateSiteUpdated, recentSheetDate);
-  
-  if (dateSiteUpdatedIsNew) {
-    parseTable(dateSiteUpdated, urlText);
-  } 
-  else {
-    Logger.log("Not a new date");
-  } 
 }
 
 
