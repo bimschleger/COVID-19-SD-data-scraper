@@ -12,3 +12,15 @@ one-time create chart
 
 // Line chart to display total cases
 
+// cumulative chart
+/*
+
+remove minor vertical axes
+remove minor horizontal axes
+remove data labels
+add total data labels
+
+*/
+
+
+

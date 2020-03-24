@@ -140,6 +140,7 @@ function parseTable(dateSiteUpdated, urlText) {
       rows.push(row);
     }
   }
+  
   // Send the scraped data into Google Sheets
   addToSpreadsheet(rows);
   
@@ -163,11 +164,10 @@ function getHtmlRowText(td) {
     var col = td.getChildren()[0].getText();
   } 
   else {
-    // Handles all <td> tags without a child <b> tag
-    var col = td.getText();
+    var col = td.getText();  // Handles all <td> tags without a child <b> tag
   }
-  // Returns the text value of the column
-  return col;
+  
+  return col; // Returns the text value of the column
 }
 
 
