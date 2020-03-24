@@ -120,62 +120,54 @@ function parseTable(dateSiteUpdated, urlText) {
   var tableText = urlText.match(regexTable);
   
   var document = XmlService.parse(tableText[0]);
+  
   var root = document.getRootElement();
-  
-  
   var tbody = root.getChildren();  // Get the tbody tag from the HTML/XML
+  var trs = tbody[0].getChildren(); // Get an array of each XML table row (tr)
   
   var rows = [];  // Defines the empty array in which we put each table row
   
-  var trs = tbody[0].getChildren(); // Get an array of each XML table row (tr)
-  Logger.log(trs); 
-  
   // For each table row, get column content
-  for (i = 0; i < trs.length; i++) {
+  for (i = 3; i < trs.length; i++) {  //start on the first row with all the columns
     
-    // We place all of the column data in this row
-    // TODO: Somehow first crawl for the row where the text "total" exists.
-    // save that as a variable (n)
-    // then only pull data form columns 1 and n
-    // Help to only get the name of the column and the total
+    var tds = trs[i].getChildren();  // Gets an array of all the columns for the row
     
-    var row = [dateSiteUpdated];
+    var rowTitle = getHtmlRowText(tds[0]);  // Gets the value of the first column
+    var rowValue = getHtmlRowText(tds[tds.length -1]); // Gets the value of the last column, which is "Total"
     
-    // Gets an array of all the columns for the row
-    var tds = trs[i].getChildren();
-    
-    // Grab the data from each column in each row
-    for (k= 0; k < tds.length; k++) {
-      
-      // TODO: maybe figure out a way to only get the age range values?
-      
-      if (tds[k].getChildren().length == 1) {
-        
-        // Handles all <td> tags with a child <b> tag
-        var col = tds[k].getChildren()[0].getText();
-        
-      } 
-      else {
-        // Handles all <td> tags without a child <b> tag
-        var col = tds[k].getText();
-      }
-      row.push(col);
-    }
-    Logger.log(row);
-    // Only add the row to rows if there are numerical values in the row. No headers. 
-    // TODO  figur eout a way to get the zeroes in there
-      // check for null values instead of blanks.
-    if (row[2] != null) { // This currently allows in the header row, which I do not want
+    if (rowValue.trim() != "") { // Gets rid of the weird single " " value for header rows
+      var row = [dateSiteUpdated, rowTitle, rowValue];
       rows.push(row);
     }
   }
-  Logger.log(rows);
-  
   // Send the scraped data into Google Sheets
   addToSpreadsheet(rows);
   
   // Update the age range chart and save it to Google Drive
   getChartAsPng(dateSiteUpdated);
+}
+
+
+/*
+
+Find the value of a table column, even if the value is wrapped in <b>
+
+@param {strign} td - a table column of XML data
+@return {string} col - the contents of the table column
+
+*/
+
+function getHtmlRowText(td) {
+  
+  if (td.getChildren().length == 1) { // Checks to see if the XML node has a child element. Note: only works for 1 child level
+    var col = td.getChildren()[0].getText();
+  } 
+  else {
+    // Handles all <td> tags without a child <b> tag
+    var col = td.getText();
+  }
+  // Returns the text value of the column
+  return col;
 }
 
 
