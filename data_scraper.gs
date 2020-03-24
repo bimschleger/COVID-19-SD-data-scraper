@@ -15,6 +15,7 @@ If the site updated date is greater than the most recent date in the spreadsheet
 
 */
 
+
 function getData() {
   
   var url = 'https://www.sandiegocounty.gov/content/sdc/hhsa/programs/phs/community_epidemiology/dc/2019-nCoV/status.html';
@@ -118,27 +119,26 @@ function parseTable(dateSiteUpdated, urlText) {
   var regexTable = /<table[\s\S]*?\/table>/;
   var tableText = urlText.match(regexTable);
   
-  // Logger.log(tableText);
-  
   var document = XmlService.parse(tableText[0]);
   var root = document.getRootElement();
   
-  //Logger.log("Root: " + root);
   
-  // Get the tbody tag from the HTML/XML
-  var tbody = root.getChildren();
+  var tbody = root.getChildren();  // Get the tbody tag from the HTML/XML
   
-  // Defines the empty array in which we put each table row
-  var rows = [];
+  var rows = [];  // Defines the empty array in which we put each table row
   
-  // Get an array of each XML table row (tr)
-  var trs = tbody[0].getChildren();
+  var trs = tbody[0].getChildren(); // Get an array of each XML table row (tr)
+  Logger.log(trs); 
   
   // For each table row, get column content
   for (i = 0; i < trs.length; i++) {
     
     // We place all of the column data in this row
-    // Add in dateSiteUpdated, since we'll use this as a record in sheets
+    // TODO: Somehow first crawl for the row where the text "total" exists.
+    // save that as a variable (n)
+    // then only pull data form columns 1 and n
+    // Help to only get the name of the column and the total
+    
     var row = [dateSiteUpdated];
     
     // Gets an array of all the columns for the row
@@ -161,20 +161,21 @@ function parseTable(dateSiteUpdated, urlText) {
       }
       row.push(col);
     }
-    
+    Logger.log(row);
     // Only add the row to rows if there are numerical values in the row. No headers. 
     // TODO  figur eout a way to get the zeroes in there
-      // check for numm values instead of blanks.
-    if (row[2] + row[3] + row[4] + row[5] > 0) {
+      // check for null values instead of blanks.
+    if (row[2] != null) { // This currently allows in the header row, which I do not want
       rows.push(row);
     }
   }
+  Logger.log(rows);
   
   // Send the scraped data into Google Sheets
   addToSpreadsheet(rows);
   
   // Update the age range chart and save it to Google Drive
-  getChartAsPng();
+  getChartAsPng(dateSiteUpdated);
 }
 
 
@@ -188,12 +189,16 @@ Sends the scraped row data into Google Sheets
 
 function addToSpreadsheet(rows) {
 
-  var sheet = SpreadsheetApp.openById("1YoJrGvn80VYjKY0--pxEr9gZPqacRm0Hdf79am1ASj0");
-  var ss = sheet.getSheetByName("data");
+  var sheetId = "1YoJrGvn80VYjKY0--pxEr9gZPqacRm0Hdf79am1ASj0";
+  var sheetName = "data";
+  
+  var sheet = SpreadsheetApp.openById(sheetId);
+  var ss = sheet.getSheetByName(sheetName);
+  
   var startingRow = ss.getLastRow() + 1;
   var startingColumn = 1;
-  var numRows = rows.length;
-  var numColumns = 6;
+  var numRows = rows.length;  // Number of rows in the dataset
+  var numColumns = rows[0].length;  // Number of columns in each row
   
   ss.getRange(startingRow, startingColumn, numRows, numColumns).setValues(rows);  
 }
@@ -205,7 +210,7 @@ Opens the Pivot table chat from Spreadsheet, saves is as a PNG in Google Drive.
 
 */
 
-function getChartAsPng(dateSiteUpdated) { // TODO: add 'sheetId' as input parameter
+function getChartAsPng(dateSiteUpdated) {
   
   var sheetId = "1YoJrGvn80VYjKY0--pxEr9gZPqacRm0Hdf79am1ASj0";
   var sheetName = "pivot";
@@ -250,7 +255,6 @@ function formatDate(date) {
   var day = cleanSingleDigitTime(date.getDate());
   
   var dateString = year + "-" + month + "-" + day;
-  // return date_string;
   
   return dateString;
 }
@@ -268,6 +272,6 @@ Enforces a leading 0 for a date value, like month or day.
 function cleanSingleDigitTime(time) {
   if (time < 10) {
       time = "0" + time;
-    };
+  };
   return time; 
 }
