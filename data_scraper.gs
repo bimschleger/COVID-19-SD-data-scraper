@@ -122,18 +122,18 @@ function parseTable(dateSiteUpdated, urlText) {
   var document = XmlService.parse(tableText[0]);
   
   var root = document.getRootElement();
-  var tbody = root.getChildren();  // Get the tbody tag from the HTML/XML
-  var trs = tbody[0].getChildren(); // Get an array of each XML table row (tr)
+  var tableBody = root.getChildren();  // Get the tableBody tag from the HTML/XML
+  var tableRows = tableBody[0].getChildren(); // Get an array of each XML table row (tr)
   
   var rows = [];  // Defines the empty array in which we put each table row
   
   // For each table row, get column content
-  for (i = 3; i < trs.length; i++) {  //start on the first row with all the columns
+  for (i = 3; i < tableRows.length; i++) {  //start on the first row with all the columns
     
-    var tds = trs[i].getChildren();  // Gets an array of all the columns for the row
+    var tableColumns = tableRows[i].getChildren();  // Gets an array of all the columns for the row
     
-    var rowTitle = getHtmlRowText(tds[0]);  // Gets the value of the first column
-    var rowValue = getHtmlRowText(tds[tds.length -1]); // Gets the value of the last column, which is "Total"
+    var rowTitle = getHtmlRowText(tableColumns[0]);  // Gets the value of the first column
+    var rowValue = getHtmlRowText(tableColumns[tableColumns.length -1]); // Gets the value of the last column, which is "Total"
     
     if (rowValue.trim() != "") { // Gets rid of the weird single " " value for header rows
       var row = [dateSiteUpdated, rowTitle, rowValue];
@@ -144,8 +144,9 @@ function parseTable(dateSiteUpdated, urlText) {
   // Send the scraped data into Google Sheets
   addToSpreadsheet(rows);
   
-  // Update the age range chart and save it to Google Drive
-  getChartAsPng(dateSiteUpdated);
+  // Update the age range and severity charts and save them to Google Drive
+  getChartAsPng(dateSiteUpdated, "age");
+  getChartAsPng(dateSiteUpdated, "severity");
 }
 
 
@@ -198,42 +199,6 @@ function addToSpreadsheet(rows) {
 
 /*
 
-Opens the Pivot table chat from Spreadsheet, saves is as a PNG in Google Drive.
-
-*/
-
-function getChartAsPng(dateSiteUpdated) {
-  
-  var sheetId = "1YoJrGvn80VYjKY0--pxEr9gZPqacRm0Hdf79am1ASj0";
-  var sheetName = "pivot";
-  
-  var sheet = SpreadsheetApp.openById(sheetId)
-  var ss = sheet.getSheetByName(sheetName);
-  
-  var chart = ss.getCharts()[0]; // Gets the first chart on the pivot sheet
-  
-  chart = chart.modify()
-    .setOption('width', 800)
-    .setOption('height', 480)
-    .build();
-  
-    // TODO update chart to remove gridlines, or at least fix the weird intervals when there are only two dates
-  ss.updateChart(chart);
-  
-  var chart_blob = chart.getBlob();
-  
-  var driveFolder = DriveApp.getFolderById("1tqad55K2orLHCCFjNYqieE2uujAfEU-S");
-  var file = driveFolder.createFile(chart_blob);
-  
-  var dateString = formatDate(dateSiteUpdated);
-  
-  file.setName("Coronavirus-SanDiego-" + dateString);
-  
-}
-
-
-/*
-
 Formats the date of a chart into a YYYY-MM-DD format for use in a file name.
 
 @return {string} dateString - YYYY-MM-DD formatted text for use in the filename of the chart PNG
@@ -267,3 +232,30 @@ function cleanSingleDigitTime(time) {
   };
   return time; 
 }
+
+
+/*
+
+Grabs the CSV data from the New York Times, and filters by the FIPS codes for San Diego, DuPage, and Allen counties
+
+*/
+
+function getNytCountyData() {
+  
+  var csvUrl = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv";
+  var csvContent = UrlFetchApp.fetch(csvUrl).getContentText();
+  var csvData = Utilities.parseCsv(csvContent);
+  
+  var relevantCounties = ["06073", "18003", "17043"];
+  var csvDataFiltered = [];
+  
+  csvData.forEach( function (row){
+    
+    if (relevantCounties.includes(row[3])) {
+      csvDataFiltered.push(row);
+      Logger.log(row);
+    }
+  });
+}
+  
+  
