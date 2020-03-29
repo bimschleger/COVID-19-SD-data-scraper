@@ -246,7 +246,7 @@ function getNytCountyData() {
   var csvContent = UrlFetchApp.fetch(csvUrl).getContentText();
   var csvData = Utilities.parseCsv(csvContent);
   
-  var relevantCounties = ["06073", "18003", "17043"];
+  var relevantCounties = ["06073", "18003", "17043"];  // TODO: get these into classes, with population, density, FIPS, and name
   var csvDataFiltered = [];
   
   csvData.forEach( function (row){
@@ -257,5 +257,17 @@ function getNytCountyData() {
     }
   });
 }
-  
+
+
+/* Want to get the net daily cases by age, gender, and severity, relative to the first positive case.
+need to get the date of the first positive
+For each county
+determine total cases from the day before ineach category
+get today's value for each category
+subtract yesterdays cumulative from today's cumulative
+add data 
+
+[ date, county, FIPS, total positives, [ages], [genders], [severities] ]
+
+*/
   
