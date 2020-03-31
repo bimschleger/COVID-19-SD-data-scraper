@@ -45,11 +45,10 @@ Gets the 'Updated [Month] DD, YYYY" form the San Diego website.
 
 function getDateSiteUpdated(urlText) {
   
-  var regexDateUpdated = /Updated[\s\S]*?2020/g;
+  var regexDateUpdated = /\S+?\s\d{1,2},\s\d{4}/g;
   
   var dateSiteUpdatedArray = urlText.match(regexDateUpdated); // returns array of matches
-  
-  var dateSiteUpdatedText = dateSiteUpdatedArray[0].split("Updated ");
+  var dateSiteUpdatedText = dateSiteUpdatedArray[1]; // There are multiple dates on the page. This gets the one we need.
   var dateSiteUpdated = new Date(dateSiteUpdatedText);
   
   return dateSiteUpdated;
@@ -72,7 +71,7 @@ function getDateSheetUpdated() {
   var sheet = SpreadsheetApp.openById(sheetId);
   var ss = sheet.getSheetByName(sheetName);
   
-  var numRows = ss.getLastRow() - 1; // To tell the range to collec tuntil the last row, but starting from row 2
+  var numRows = ss.getLastRow() - 1; // To tell the range to collect until the last row, but starting from row 2
   var data = ss.getRange(2, 1, numRows).getValues(); // Gets dates from all the data in the sheet
   var recentDate = data[data.length -1];
   
@@ -128,7 +127,7 @@ function parseTable(dateSiteUpdated, urlText) {
   var rows = [];  // Defines the empty array in which we put each table row
   
   // For each table row, get column content
-  for (i = 3; i < tableRows.length; i++) {  //start on the first row with all the columns
+  for (i = 4; i < tableRows.length; i++) {  //start on the first row with all the columns
     
     var tableColumns = tableRows[i].getChildren();  // Gets an array of all the columns for the row
     
@@ -261,13 +260,16 @@ function getNytCountyData() {
 
 /* Want to get the net daily cases by age, gender, and severity, relative to the first positive case.
 need to get the date of the first positive
-For each county
-determine total cases from the day before ineach category
-get today's value for each category
-subtract yesterdays cumulative from today's cumulative
-add data 
 
-[ date, county, FIPS, total positives, [ages], [genders], [severities] ]
+For each county
+  determine total cases from the day before ineach category
+  get today's value for each category
+  subtract yesterdays cumulative from today's cumulative
+  add net-new data into row
+  add row into sheets
+    note: since we'll grab local SD data, and NYT dat for other counties, this function should be abstracted somehow
+
+Proposed row format: [ date, county, FIPS, total positives, [ages], [genders], [severities] ]
 
 */
   
